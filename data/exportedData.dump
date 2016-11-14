@@ -1,0 +1,20 @@
+PRAGMA foreign_keys=OFF;
+ BEGIN TRANSACTION;
+CREATE TABLE "users" (
+	"id" INTEGER PRIMARY KEY AUTOINCREMENT,
+	"email" TEXT NOT NULL UNIQUE,
+	"nickname" TEXT NOT NULL UNIQUE,
+	"token" TEXT NOT NULL UNIQUE
+);
+INSERT INTO "users" VALUES(1,'alice@test.com','Alice','dcebfcb3a8fc94523b571ce997afa5b8');
+INSERT INTO "users" VALUES(2,'bob@test.com','Bob','a84ca8006fa758be44db7f096ae78b8e');
+DELETE FROM sqlite_sequence;
+INSERT INTO "sqlite_sequence" VALUES('users',4);
+CREATE TABLE "messages" (
+	"from_user_id" INTEGER NOT NULL REFERENCES users (id)  ON DELETE CASCADE ON UPDATE CASCADE,
+	"to_user_id" INTEGER NOT NULL REFERENCES users (id)  ON DELETE CASCADE ON UPDATE CASCADE,
+	"send_time" TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	"read" INTEGER NOT NULL DEFAULT 0 CHECK ( (0|1) )
+);
+PRAGMA writable_schema=OFF;
+COMMIT;
