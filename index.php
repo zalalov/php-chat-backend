@@ -1,7 +1,9 @@
 <?php
 
-require __DIR__ . "/src/Autoloader.php";
+define("BASE_DIR", __DIR__);
 
-$user = new User();
+require_once(BASE_DIR .  "/src/Autoloader.php");
+$config = require_once(BASE_DIR . "/config.php");
 
-print $user->id;
+$db = new DbConnection();
+print_r($db->fetchRow("users"));

@@ -5,10 +5,7 @@
  */
 return [
     "db" => [
-        "host" => "localhost",
-        "user" => "user",
-        "password" => "password",
-        "database" => "db"
+        "path" => "/data/db.sqlite",
     ],
     "routes" => [
         "/api/message/history" => [],
