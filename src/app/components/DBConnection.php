@@ -4,6 +4,11 @@ class DbConnection {
     private $sqlite;
     private $mode;
 
+    /**
+     * DbConnection constructor.
+     * @param int $mode
+     * @throws Exception
+     */
     function __construct($mode = SQLITE3_ASSOC) {
         global $config;
 
@@ -15,14 +20,27 @@ class DbConnection {
         }
     }
 
+    /**
+     * DbConnection destructor
+     */
     function __destruct() {
         @$this->sqlite->close();
     }
 
+    /**
+     * Escape string
+     * @param $var
+     * @return string
+     */
     function escape($var) {
         return $this->sqlite->escapeString($var);
     }
 
+    /**
+     * Sanitize string/array
+     * @param $str_arr
+     * @return string
+     */
     function sanitize($str_arr) {
         if (is_array($str_arr)) {
             $data = '';
@@ -37,6 +55,12 @@ class DbConnection {
         return $this->escape($str_arr);
     }
 
+    /**
+     * Make query
+     * @param $query
+     * @return SQLite3Result
+     * @throws Exception
+     */
     function query($query) {
         // prevent SQLi: Hello,  BUNQ code reviewer )
         $q = $this->sanitize($query);
@@ -49,15 +73,29 @@ class DbConnection {
         return $res;
     }
 
+    /**
+     * Truncate table
+     * @param $tableName
+     */
     function truncate($tableName) {
         $this->query("DELETE FROM ". $tableName);
         $this->query("DELETE FROM sqlite_sequence WHERE name = '". $tableName ."'");
     }
 
+    /**
+     * Get last inserted row's id
+     * @return int
+     */
     function sqlite_insert_id() {
         return $this->sqlite->lastInsertRowID();
     }
 
+    /**
+     * Insert row
+     * @param $tableName
+     * @param array $inData
+     * @return bool|SQLite3Result
+     */
     function insert($tableName, $inData = []) {
         if (!empty($inData) && !empty($tableName)) {
             $cols = $vals = '';
@@ -75,6 +113,13 @@ class DbConnection {
         }
     }
 
+    /**
+     * Update row
+     * @param $tableName
+     * @param array $inData
+     * @param $condition
+     * @return bool|SQLite3Result
+     */
     function update($tableName, $inData = [], $condition) {
         if (!empty($inData) && !empty($tableName) && !empty($condition)) {
             $str = '';
@@ -91,6 +136,11 @@ class DbConnection {
         }
     }
 
+    /**
+     * Execute query and fetch one record
+     * @param $query
+     * @return array
+     */
     function rowArray($query) {
         $res = $this->query($query);
         $row = $res->fetchArray($this->mode);
@@ -98,7 +148,12 @@ class DbConnection {
         return $row;
     }
 
-    function fetchArray($query) {
+    /**
+     * Execute query and fetch multiple records
+     * @param $query
+     * @return array
+     */
+    function rowsArray($query) {
         $rows = [];
 
         if ($res = $this->query($query)) {
@@ -110,6 +165,13 @@ class DbConnection {
         return $rows;
     }
 
+    /**
+     * Fetch one record
+     * @param $table_name
+     * @param string $condition
+     * @param string $column
+     * @return array
+     */
     function fetchRow($table_name, $condition = "1", $column = '*') {
         $qry = "SELECT ". $column ." FROM ". $table_name ." WHERE ". $condition;
         $row = $this->rowArray($qry);
@@ -117,9 +179,16 @@ class DbConnection {
         return $row;
     }
 
+    /**
+     * Fetch records
+     * @param $table_name
+     * @param string $condition
+     * @param string $column
+     * @return mixed
+     */
     function fetchRows($table_name, $condition = "1", $column = '*') {
         $qry = "SELECT ". $column ." FROM ". $table_name ." WHERE ". $condition;
-        $row = $this->fetchArray($qry);
+        $row = $this->rowsArray($qry);
 
         return $row;
     }
