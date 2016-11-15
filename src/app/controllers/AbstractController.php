@@ -7,6 +7,12 @@ class AbstractController {
     const TYPE_FILTER_AUTH = "auth";
 
     /**
+     * Authenticated user object
+     * @var null
+     */
+    protected $_authUser = null;
+
+    /**
      * AbstractController constructor.
      */
     function __construct() {
@@ -24,7 +30,7 @@ class AbstractController {
         }
 
         try {
-            foreach ($this->filters as $filter) {
+            foreach ($this->filters as $filter => $methods) {
                 switch ($filter) {
                     case self::TYPE_FILTER_AUTH:
                         $user = User::getByToken($_POST["token"]);
@@ -32,6 +38,8 @@ class AbstractController {
                         if (!$user) {
                             throw new Exception("Permission denied.", 403);
                         }
+
+                        $this->_authUser = $user;
 
                         break;
 
@@ -46,5 +54,21 @@ class AbstractController {
         }
 
         return true;
+    }
+
+    /**
+     * Execute action
+     * @param $action
+     * @return mixed
+     * @throws Exception
+     */
+    public function execute($action) {
+        $method = "action" . ucwords($action);
+
+        if (!method_exists($this, $method)) {
+            throw new Exception("Method not exists.");
+        }
+
+        return $this->{$method}();
     }
 }

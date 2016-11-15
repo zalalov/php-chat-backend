@@ -13,9 +13,10 @@ class DbConnection {
         global $config;
 
         $this->mode = $mode;
-        $this->sqlite = new SQLite3(BASE_DIR . DIRECTORY_SEPARATOR . $config["db"]["path"]);
 
-        if ($this->sqlite === null) {
+        try {
+            $this->sqlite = new SQLite3(BASE_DIR . DIRECTORY_SEPARATOR . $config["db"]["path"]);
+        } catch (Exception $e) {
             throw new Exception("Cannot connect to database", 500);
         }
     }
@@ -32,8 +33,8 @@ class DbConnection {
      * @param $var
      * @return string
      */
-    function escape($var) {
-        return $this->sqlite->escapeString($var);
+    public static function escape($var) {
+        return SQLite3::escapeString($var);
     }
 
     /**
@@ -41,18 +42,18 @@ class DbConnection {
      * @param $str_arr
      * @return string
      */
-    function sanitize($str_arr) {
+    public static function sanitize($str_arr) {
         if (is_array($str_arr)) {
             $data = '';
 
             foreach ($str_arr as $key => $val) {
-                $data[$key] = $this->escape($val);
+                $data[$key] = self::escape($val);
             }
 
             return $data;
         }
 
-        return $this->escape($str_arr);
+        return self::escape($str_arr);
     }
 
     /**
@@ -61,10 +62,8 @@ class DbConnection {
      * @return SQLite3Result
      * @throws Exception
      */
-    function query($query) {
-        // prevent SQLi: Hello,  BUNQ code reviewer )
-        $q = $this->sanitize($query);
-        $res = $this->sqlite->query($q);
+    private function _query($query) {
+        $res = $this->sqlite->query($query);
 
         if (!$res) {
             throw new Exception($this->sqlite->lastErrorMsg());
@@ -77,16 +76,16 @@ class DbConnection {
      * Truncate table
      * @param $tableName
      */
-    function truncate($tableName) {
-        $this->query("DELETE FROM ". $tableName);
-        $this->query("DELETE FROM sqlite_sequence WHERE name = '". $tableName ."'");
+    public function truncate($tableName) {
+        $this->_query("DELETE FROM ". $tableName);
+        $this->_query("DELETE FROM sqlite_sequence WHERE name = '". $tableName ."'");
     }
 
     /**
      * Get last inserted row's id
      * @return int
      */
-    function sqlite_insert_id() {
+    public function sqlite_insert_id() {
         return $this->sqlite->lastInsertRowID();
     }
 
@@ -96,7 +95,7 @@ class DbConnection {
      * @param array $inData
      * @return bool|SQLite3Result
      */
-    function insert($tableName, $inData = []) {
+    public function insert($tableName, $inData = []) {
         if (!empty($inData) && !empty($tableName)) {
             $cols = $vals = '';
 
@@ -107,7 +106,7 @@ class DbConnection {
 
             $query = "INSERT INTO ". $tableName ."(". trim($cols, ', ') .") VALUES(". trim($vals, ', ') .") ";
 
-            return $this->query($query);
+            return $this->_query($query);
         } else {
             return false;
         }
@@ -120,7 +119,7 @@ class DbConnection {
      * @param $condition
      * @return bool|SQLite3Result
      */
-    function update($tableName, $inData = [], $condition) {
+    public function update($tableName, $inData = [], $condition) {
         if (!empty($inData) && !empty($tableName) && !empty($condition)) {
             $str = '';
 
@@ -130,7 +129,7 @@ class DbConnection {
 
             $query = "UPDATE ". $tableName ." SET ". trim($str, ', ') ." WHERE ". $condition;
 
-            return $this->query($query);
+            return $this->_query($query);
         } else {
             return false;
         }
@@ -141,8 +140,8 @@ class DbConnection {
      * @param $query
      * @return array
      */
-    function rowArray($query) {
-        $res = $this->query($query);
+    private function _rowArray($query) {
+        $res = $this->_query($query);
         $row = $res->fetchArray($this->mode);
 
         return $row;
@@ -153,10 +152,10 @@ class DbConnection {
      * @param $query
      * @return array
      */
-    function rowsArray($query) {
+    private function _rowsArray($query) {
         $rows = [];
 
-        if ($res = $this->query($query)) {
+        if ($res = $this->_query($query)) {
             while ($row = $res->fetchArray($this->mode)) {
                 $rows[] = $row;
             }
@@ -172,9 +171,9 @@ class DbConnection {
      * @param string $column
      * @return array
      */
-    function fetchRow($table_name, $condition = "1", $column = '*') {
-        $qry = "SELECT ". $column ." FROM ". $table_name ." WHERE ". $condition;
-        $row = $this->rowArray($qry);
+    public function fetchRow($table_name, $condition = "1", $column = '*') {
+        $query = "SELECT ". $column ." FROM ". $table_name ." WHERE ". $condition;
+        $row = $this->_rowArray($query);
 
         return $row;
     }
@@ -186,9 +185,11 @@ class DbConnection {
      * @param string $column
      * @return mixed
      */
-    function fetchRows($table_name, $condition = "1", $column = '*') {
-        $qry = "SELECT ". $column ." FROM ". $table_name ." WHERE ". $condition;
-        $row = $this->rowsArray($qry);
+    public function fetchRows($table_name, $condition = "1", $column = '*') {
+        $query = "SELECT ". $column ." FROM ". $table_name ." WHERE ". $condition;
+        $row = $this->_rowsArray($query);
+
+        error_log($query);
 
         return $row;
     }
