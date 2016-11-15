@@ -3,9 +3,9 @@ The command below will create new Docker image called 'bunq' and will run it. RE
 ```sh
 ./build.sh && ./start.sh
 ```
-For reverting all changes run the command below:
+For reverting all changes stop the server and run the command below:
 ```sh
-docker rm bunq && docker rmi bunq
+docker rmi bunq
 ```
 
 ### Using
@@ -31,5 +31,5 @@ $ curl -X POST -F "token=dcebfcb3a8fc94523b571ce997afa5b8" -F "to_user_id=2" -F 
 Examples:
 ```sh
 $ curl -X POST -F "token=dcebfcb3a8fc94523b571ce997afa5b8" -F "to_user_id=2" -F "from_user_id=1" -F "text='hello my friend'" http://192.168.99.100:8000/api/message/send
-$ curl -X POST -F "token=a84ca8006fa758be44db7f096ae78b8e” http://192.168.99.100:8000/api/message/history
+$ curl -X POST -F "token=a84ca8006fa758be44db7f096ae78b8e" http://192.168.99.100:8000/api/message/history
 ```
