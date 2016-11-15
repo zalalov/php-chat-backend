@@ -1,6 +1,6 @@
 <?php
 
-class AbstractController {
+abstract class AbstractController {
     /**
      * Authenticate filter
      */
